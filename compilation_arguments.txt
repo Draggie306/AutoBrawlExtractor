@@ -1,0 +1,3 @@
+pyinstaller.exe --onefile --icon=app.ico --clean extractor.py
+
+Optional:  --splash sussy_balls.png
