@@ -1,12 +1,13 @@
-from os import path, mkdir, environ, startfile  
+from os import path, mkdir, environ, startfile
 from requests import get
 import logging, datetime, sys
-from time import monotonic
+from datetime import datetime
+from time import monotonic, sleep
+import zipfile
 
-
-build = 1
-version = "0.0.1"
-build_date = 1661622335
+build = 2
+version = "0.0.2"
+build_date = 1661878507
 
 Brawl_AppData_Directory = (f"{environ['USERPROFILE']}\\AppData\\Roaming\\Draggie\\AutoBrawlExtractor")
 Draggie_AppData_Directory = (f"{environ['USERPROFILE']}\\AppData\\Roaming\\Draggie")
@@ -32,7 +33,6 @@ if not path.exists(f"{Brawl_AppData_Directory}\\SourceCode"):
 
 print("Welcome to Draggie's AutoBrawlExtractor")
 print(f"The version you are running is {version} (build {build})")
-
 
 current_directory = path.dirname(path.realpath(__file__))
 
@@ -92,3 +92,41 @@ def check_for_update():
         print("\nHey, you're running on a version newer than the public build. That means you're very special UwU\n")
     else:
         print(f"Running version {version} - build {build} - @ {datetime.fromtimestamp(build_date).strftime('%Y-%m-%d %H:%M:%S')}. The server says the newest build is {current_build_version}.")
+
+
+check_for_update()
+
+
+def init_filetype(dir):
+    """
+    Initialises and checks the validity of the archive version provided. If the file provided is not valid, then the program will exit.
+    """
+    try:
+        archive = zipfile.ZipFile(dir, 'r')
+        try:
+            test_data = archive.read('Payload/Brawl Stars.app/PkgInfo')
+            version = "IPA"
+        except KeyError:
+            test_data = archive.read('classes.dex')
+            version = "APK"
+        if version:
+            print(f"Detected Verson: {version}")
+        else:
+            print("Unknown version type please use the other OS' version")
+            sleep(4)
+            sys.exit()
+    except Exception as e:
+        print(f"Error occured: {e}")
+
+
+
+print(r"Enter the location of your Brawl Stars archive file, e.g D:\Downloads\brawl.apk")
+print("Use an .ipa file or .apk file (for iOS and Android decices, respectively). Must not be unzipped.")
+print("Alternatively, press 1 to search for downloadable versions, if you do not have the version.")
+location = input("\n>>> ")
+
+if location == "1":
+    print("Fetching available versions from GitHub...")
+    latest_apk = str((get(f"https://raw.githubusercontent.com/Draggie306/AutoBrawlExtractor/main/Release%20Notes/release_notes_v{(current_build_version)}.txt")).text)
+
+init_filetype(location)
