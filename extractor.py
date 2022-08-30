@@ -1,16 +1,17 @@
-from os import path, mkdir, environ, startfile
+from os import path, mkdir, environ, listdir
 from requests import get
 import logging, datetime, sys
 from datetime import datetime
 from time import monotonic, sleep
 import zipfile
 
-build = 2
-version = "0.0.2"
-build_date = 1661878507
+build = 3
+version = "0.0.3"
+build_date = 1661878915
 
 Brawl_AppData_Directory = (f"{environ['USERPROFILE']}\\AppData\\Roaming\\Draggie\\AutoBrawlExtractor")
 Draggie_AppData_Directory = (f"{environ['USERPROFILE']}\\AppData\\Roaming\\Draggie")
+Downloaded_Builds_AppData_Directory = (f"{environ['USERPROFILE']}\\AppData\\Roaming\\Draggie\\AutoBrawlExtractor\\DownloadedBuilds")
 
 #   Fixes issues on first-time entry.
 if not path.exists(Draggie_AppData_Directory):
@@ -119,14 +120,72 @@ def init_filetype(dir):
         print(f"Error occured: {e}")
 
 
+def number_one():
+    print(r"Enter the location of your Brawl Stars archive file, e.g D:\Downloads\brawl.apk")
+    print("Use an .ipa file or .apk file (for iOS and Android decices, respectively). Must not be unzipped.")
+    print("Alternatively, press 1 to search for downloadable versions, if you do not have the file.")
 
-print(r"Enter the location of your Brawl Stars archive file, e.g D:\Downloads\brawl.apk")
-print("Use an .ipa file or .apk file (for iOS and Android decices, respectively). Must not be unzipped.")
-print("Alternatively, press 1 to search for downloadable versions, if you do not have the version.")
-location = input("\n>>> ")
+    amount_of_files = 0
 
-if location == "1":
-    print("Fetching available versions from GitHub...")
-    latest_apk = str((get(f"https://raw.githubusercontent.com/Draggie306/AutoBrawlExtractor/main/Release%20Notes/release_notes_v{(current_build_version)}.txt")).text)
+    for i in listdir(Downloaded_Builds_AppData_Directory):
+        amount_of_files = amount_of_files + 1
 
-init_filetype(location)
+    if amount_of_files >= 1:
+        print(f"\nYou have {amount_of_files} files already downloaded inside the DownloadedBuilds folder")
+
+    location = input("\n>>> ")
+
+    if location == "1":
+        print("Fetching available versions from GitHub...")
+        latest_apk = str((get("https://raw.githubusercontent.com/Draggie306/AutoBrawlExtractor/main/Builds/latest.apk")).text)
+        latest_ipa = str((get("https://raw.githubusercontent.com/Draggie306/AutoBrawlExtractor/main/Builds/latest.ipa")).text)
+        apk_lines = latest_apk.splitlines()
+        print(f"APK version {apk_lines[0]} is available to download. Source: {apk_lines[2]}")
+        ipa_lines = latest_ipa.splitlines()
+        print(f"IPA version {ipa_lines[0]} is available to download. Source: {ipa_lines[2]}")
+        decision = input("Would you like to download the APK (type 1) or IPA (option 2). Alternatively, type enter to go back.\n\n>>> ")
+        print(f"Files will be downloaded to {Brawl_AppData_Directory}/DownloadedBuilds")
+
+        if decision == "1":
+            download_dir = apk_lines[1]
+            r = get(download_dir, stream=True)
+            file_size = int(r.headers['content-length'])
+            downloaded = 0
+            start = last_print = monotonic()
+            if not path.exists(f'{Brawl_AppData_Directory}\\DownloadedBuilds'):
+                mkdir(f'{Brawl_AppData_Directory}\\DownloadedBuilds')
+            with open(f'{Brawl_AppData_Directory}\\DownloadedBuilds\\{apk_lines[0]}.apk', 'wb') as f:
+                for chunk in r.iter_content(chunk_size=1024):
+                    downloaded += f.write(chunk)
+                    now = monotonic()
+                    if now - last_print > 0.5:
+                        pct_done = round(downloaded / file_size * 100)
+                        speed = round(downloaded / (now - start) / 1024)
+                        print(f'Downloading file. {pct_done}% - {speed} kbps')
+                        last_print = now
+
+        if decision == "2":
+            download_dir = ipa_lines[1]
+            r = get(download_dir, stream=True)
+            file_size = int(r.headers['content-length'])
+            downloaded = 0
+            start = last_print = monotonic()
+            if not path.exists(f'{Brawl_AppData_Directory}\\DownloadedBuilds'):
+                mkdir(f'{Brawl_AppData_Directory}\\DownloadedBuilds')
+            with open(f'{Brawl_AppData_Directory}\\DownloadedBuilds\\{ipa_lines[0]}.ipa', 'wb') as f:
+                for chunk in r.iter_content(chunk_size=1024):
+                    downloaded += f.write(chunk)
+                    now = monotonic()
+                    if now - last_print > 0.5:
+                        pct_done = round(downloaded / file_size * 100)
+                        speed = round(downloaded / (now - start) / 1024)
+                        print(f'Downloading file. {pct_done}% - {speed} kbps')
+                        last_print = now
+        if decision == "":
+            number_one()
+        
+    else:
+        init_filetype(location)
+
+
+number_one()
