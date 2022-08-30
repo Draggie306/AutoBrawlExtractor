@@ -5,9 +5,9 @@ from datetime import datetime
 from time import monotonic, sleep
 import zipfile
 
-build = 3
-version = "0.0.3"
-build_date = 1661878915
+build = 4
+version = "0.0.4"
+build_date = 1661878506
 
 Brawl_AppData_Directory = (f"{environ['USERPROFILE']}\\AppData\\Roaming\\Draggie\\AutoBrawlExtractor")
 Draggie_AppData_Directory = (f"{environ['USERPROFILE']}\\AppData\\Roaming\\Draggie")
@@ -163,6 +163,7 @@ def number_one():
                         speed = round(downloaded / (now - start) / 1024)
                         print(f'Downloading file. {pct_done}% - {speed} kbps')
                         last_print = now
+            print("Downloaded the file!")
 
         if decision == "2":
             download_dir = ipa_lines[1]
@@ -181,9 +182,10 @@ def number_one():
                         speed = round(downloaded / (now - start) / 1024)
                         print(f'Downloading file. {pct_done}% - {speed} kbps')
                         last_print = now
-        if decision == "":
-            number_one()
-        
+            print("Downloaded the file!")
+
+        number_one()
+  
     else:
         init_filetype(location)
 
